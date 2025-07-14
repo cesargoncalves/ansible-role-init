@@ -1,0 +1,20 @@
+---
+dependencies: []
+
+galaxy_info:
+  author: cesargoncalves
+  description: Bootstraps a privileged user account
+  license: license (GPL-3.0-only)
+  min_ansible_version: '2.1'
+  platforms:
+    - name: Fedora
+      versions:
+        - all
+    - name: Debian
+      versions:
+        - bullseye
+        - bookworm
+  galaxy_tags:
+    - user
+    - sudo
+    - system

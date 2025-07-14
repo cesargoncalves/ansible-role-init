@@ -1,0 +1,57 @@
+---
+- name: Ensure group exists.
+  ansible.builtin.group:
+    name: "{{ init_username }}"
+    gid: "{{ init_id }}"
+
+- name: Ensure user exists.
+  ansible.builtin.user:
+    name: "{{ init_username }}"
+    password: "{{ init_password | password_hash('sha512') }}"
+    update_password: "on_create"
+    uid: "{{ init_id }}"
+    shell: /bin/bash
+
+- name: Ensure SSH public keys are deployed.
+  ansible.posix.authorized_key:
+    user: "{{ init_username }}"
+    key: "{{ item }}"
+    state: present
+  loop: "{{ init_authorized_keys }}"
+
+- name: Ensure sudo is installed.
+  ansible.builtin.package:
+    name: sudo
+    state: present
+    update_cache: true
+
+- name: Ensure sudoers.d exists.
+  ansible.builtin.file:
+    name: '/etc/sudoers.d/'
+    owner: 'root'
+    group: 'root'
+    mode: '0750'
+    state: directory
+
+- name: Ensure nopasswd file is present.
+  ansible.builtin.copy:
+    src: "{{ role_path }}/files/sudoers-{{ ansible_os_family }}"
+    dest: '/etc/sudoers.d/99-nopasswd'
+    owner: 'root'
+    group: 'root'
+    mode: '0600'
+    validate: 'visudo -cf %s'
+
+- name: Ensure user is on sudo group.
+  ansible.builtin.user:
+    name: "{{ init_username }}"
+    groups: sudo
+    append: true
+  when: ansible_os_family == 'Debian'
+
+- name: Ensure user is on wheel group.
+  ansible.builtin.user:
+    name: "{{ init_username }}"
+    groups: wheel
+    append: true
+  when: ansible_os_family == 'RedHat'
